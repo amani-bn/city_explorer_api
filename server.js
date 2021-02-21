@@ -8,10 +8,10 @@ const PORT = process.env.PORT || 3000;
 // location route localhost:3000/location
 server.get("/location", (req, res) => {
   const locData = require("./data/location.json");
-  // console.log(locData);
-  // console.log(locData[0]);
+  console.log(locData);
+  console.log(locData[0]);
   const locObj = new Location(locData);
-  // console.log(locData[0]);
+  console.log(locData[0]);
 
   res.send(locObj);
 });
@@ -41,18 +41,6 @@ function Weather(wethJson) {
   this.forecast = wethJson.weather.description;
   this.time = new Date(wethJson.valid_date).toDateString();
   weathArr.push(this);
-
-  // [
-  //     {
-  //       "forecast": "Partly cloudy until afternoon.",
-  //       "time": "Mon Jan 01 2001"
-  //     },
-  //     {
-  //       "forecast": "Mostly cloudy in the morning.",
-  //       "time": "Tue Jan 02 2001"
-  //     },
-  //     ...
-  //   ]
 }
 // function to handle error
 server.use("*", (req, res) => {
