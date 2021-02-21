@@ -40,7 +40,7 @@ function Weather(wethJson) {
   // wether constructor
 
   this.forecast = wethJson.weather.description;
-  this.time = wethJson.valid_date;
+  this.time = new Date(wethJson.valid_date).toDateString();
 
   weathArr.push(this);
 
