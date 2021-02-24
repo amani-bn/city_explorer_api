@@ -8,11 +8,7 @@ const pg = require("pg");
 
 // Application Setup
 const PORT = process.env.PORT || 3000;
-const client = new pg.Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-// const client = new pg.Client({connectionString: process.env.DATABASE_URL});
+const client = new pg.Client({connectionString: process.env.DATABASE_URL });
 const server = express();
 server.use(cors());
 
@@ -21,71 +17,54 @@ server.get('/', homeRoute);
 server.get("/location", locationHandler);
 server.get("/weather", weatherHandler);
 server.get("/parks", parkHandler);
-server.use(errorHandler);
-// server.get("/*", errorHandler);
-// server.use(handleError);
+server.use(handleError);
 
 function homeRoute(req, res) {
-  res.send('home route');
+  res.send('You Are In Home Route Now');
 }
 
 
 function locationHandler(req, res) {
-  let city = req.query.city;
+  let city = [req.query.city];
   let SQL = `SELECT * FROM locations WHERE search_query=$1;`;
   client.query(SQL, city).then((result) => {
       if (result.rows.length > 0) {
-        res.status(200).json(result.rows[0]);
+        res.json(result.rows[0]);
       }
 
       else {
-          getlocation(req,res);
+          getlocation(city,req,res);
       
       }
 
   })
   .catch (()=>{
       // res.send('pppppppppppp',error.message)
-      handleErrors(`Error`, req, res);
+      handleError(`Error`, req, res);
   })
       
       
 }   
 
-function getlocation(){
+function getlocation(city,req,res){
   let key = process.env.LOCATION_KEY;
-    let url = `http://eu1.locationiq.com/v1/search.php?key=${key}&q=${cityName}&format=json
+    let url = `http://eu1.locationiq.com/v1/search.php?key=${key}&q=${city}&format=json
     `;
-  superagent
+  return  superagent
   .get(url)
   .then((locData) => {
-
     const locObj = new Location(city, locData.body[0]);
     // res.send(locObj);
-    
-
     let SQL = `INSERT INTO locations VALUES($1, $2, $3, $4)  RETURNING *;`;
-    let saveValues = [
-      locObj.search_query,
-      locObj.formatted_query,
-      locObj.latitude,
-      locObj.longitude,
-    ];
+    let saveValues = [locObj.search_query,locObj.formatted_query,locObj.latitude,locObj.longitude];
     client.query(SQL, saveValues)
     .then((result) => {
-      res.status(200).json(result.rows[0]);
+      res.json(result.rows[0]);
       })
-  .catch (()=>{
-    // res.send('pppppppppppp',error.message)
-    errorHandler(`Error from database`, req, res);
-})
-  .catch(() => {
-      // res.send('pppppppppppp',error.message)
-      // res.status(500).send(errors);
-      errorHandler(`Error `, req, res);
-
-
-      });
+  // .catch (()=>{
+  //   // res.send('pppppppppppp',error.message)
+  //   handleError(`Error from database`, req, res);
+  // })
 });
   
 }
@@ -105,9 +84,9 @@ function weatherHandler(req, res) {
 
       console.log(weathArr);
     })
-    .catch(() => {
-      errorHandler(`Error`, req, res);
-    });
+    // .catch(() => {
+    //   handleError(`Error`, req, res);
+    // });
 }
 
 function parkHandler(req, res) {
@@ -125,9 +104,9 @@ function parkHandler(req, res) {
       });
       res.send(parkArr);
     })
-    .catch(() => {
-      errorHandler('Error', req, res) 
-       });
+    // .catch(() => {
+    //   handleError('Error', req, res) 
+    //    });
 }
 // constructors
 function Location(city, locJson) {
@@ -149,8 +128,9 @@ function Park(geoData) {
   this.description = geoData.description;
   this.url = geoData.url;
 }
-function errorHandler(error, req, res) {
-  res.status(500).send(errObj);
+function handleError(error, req, res) {
+  // res.status(500).send('error',error);
+  res.status(500).send(body)
 }
 client
   .connect()
