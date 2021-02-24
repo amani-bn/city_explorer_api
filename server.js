@@ -17,7 +17,10 @@ server.get('/', homeRoute);
 server.get("/location", locationHandler);
 server.get("/weather", weatherHandler);
 server.get("/parks", parkHandler);
-server.use(handleError);
+server.get("/movies", movieHandler);
+server.get("/yelp", yelpHandler);
+
+// server.use(handleError);
 
 function homeRoute(req, res) {
   res.send('You Are In Home Route Now');
@@ -37,11 +40,11 @@ function locationHandler(req, res) {
       
       }
 
-  })
-  .catch (()=>{
-      // res.send('pppppppppppp',error.message)
-      handleError(`Error`, req, res);
-  })
+   })
+  // .catch (()=>{
+  //     // res.send('pppppppppppp',error.message)
+  //     handleError(`Error`, req, res);
+  // })
       
       
 }   
@@ -108,6 +111,46 @@ function parkHandler(req, res) {
     //   handleError('Error', req, res) 
     //    });
 }
+// movie route
+function movieHandler(req, res) {
+  // https://api.themoviedb.org/3/search/movie?api_key={api_key}&query=Jack+Reacher
+  
+  const city = req.query.search_query;
+  let key = process.env.MOVIE_API_KEY;
+  const url=`https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${city}`;
+  superagent
+    .get(url)
+    .then((movData) => {
+      let movie = movData.body.results.map((value) => {
+        return new Movie(value);
+      });
+      res.send(movie);
+
+      // console.log(movieArr);
+    })
+}
+// yelp route
+function yelpHandler (req,res){
+  // https://api.yelp.com/v3/autocomplete?text=del&latitude=37.786882&longitude=-122.399972
+  let city = req.query.search_query;
+  let key =process.env.YELP_API_KEY;
+  let limit=5;
+  let page=req.query.page;
+  let start = ((page - 1) * limit + 1);
+  const url =`https://api.yelp.com/v3/businesses/search?location=${city}&limit=${limit}&offset=${start}`;
+ 
+  superagent.get(url)
+  .set (`Authorization`, `Bearer ${key}`)
+  .then ((yelpInfo) =>{
+  let yelp = yelpInfo.body.businesses.map((value) =>{
+    return new Yelp (value);
+  });
+  res.send(yelp);
+
+  })
+
+}
+
 // constructors
 function Location(city, locJson) {
   this.search_query = city;
@@ -127,11 +170,52 @@ function Park(geoData) {
   this.fee = geoData.entranceFees[0].cost || "0.00";
   this.description = geoData.description;
   this.url = geoData.url;
+ }
+  function Movie(movieData){
+    this.title=movieData.title;
+    this.overview=movieData.overview;
+    this.average_votes=movieData.average_votes;
+    this.total_votes=movieData.total_votes;
+    this.image_url=`https://image.tmdb.org/t/p/w500/${movieData.poster_path}`;
+    this.popularity=movieData.popularity;
+    this.released_on=movieData.released_on;
+
+// [
+//   {
+//     "title": "Sleepless in Seattle",
+//     "overview": "A young boy who tries to set his dad up on a date after the death of his mother. He calls into a radio station to talk about his dad’s loneliness which soon leads the dad into meeting a Journalist Annie who flies to Seattle to write a story about the boy and his dad. Yet Annie ends up with more than just a story in this popular romantic comedy.",
+//     "average_votes": "6.60",
+//     "total_votes": "881",
+//     "image_url": "https://image.tmdb.org/t/p/w500/afkYP15OeUOD0tFEmj6VvejuOcz.jpg",
+//     "popularity": "8.2340",
+//     "released_on": "1993-06-24"
+//   },
+
+
+  }
+
+function Yelp(yelpData){
+  this.name=yelpData.name;
+  this.image_url=yelpData.image_url;
+  this.price=yelpData.price;
+  this.rating=yelpData.rating;
+  this.url=yelpData.url;
+// [
+//   {
+//     "name": "Pike Place Chowder",
+//     "image_url": "https://s3-media3.fl.yelpcdn.com/bphoto/ijju-wYoRAxWjHPTCxyQGQ/o.jpg",
+//     "price": "$$   ",
+//     "rating": "4.5",
+//     "url": "https://www.yelp.com/biz/pike-place-chowder-seattle?adjust_creative=uK0rfzqjBmWNj6-d3ujNVA&utm_campaign=yelp_api_v3&utm_medium=api_v3_business_search&utm_source=uK0rfzqjBmWNj6-d3ujNVA"
+//   },
 }
-function handleError(error, req, res) {
-  // res.status(500).send('error',error);
-  res.status(500).send(body)
-}
+// function handleError(error, req, res) {
+//   // res.status(500).send('error',error);
+//   res.status(500).send(body)
+// }
+
+
+
 client
   .connect()
   .then(() => {
