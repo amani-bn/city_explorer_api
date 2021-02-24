@@ -131,7 +131,6 @@ function movieHandler(req, res) {
 }
 // yelp route
 function yelpHandler (req,res){
-  // https://api.yelp.com/v3/autocomplete?text=del&latitude=37.786882&longitude=-122.399972
   let city = req.query.search_query;
   let key =process.env.YELP_API_KEY;
   let limit=5;
